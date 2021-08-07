@@ -26,7 +26,7 @@
 
 #### 具体优化案例：
 1. 查询SQL尽量不要使用select *，而是具体字段
-反例：SELECT * FROM student
+> 反例：SELECT * FROM student
 正例：SELECT id,NAME FROM student
 理由：
 字段多时，大表能达到100多个字段甚至达200多个字段
@@ -34,7 +34,7 @@
 select * 进行查询时，很可能不会用到索引，就会造成全表扫描
 
 2. 避免在where子句中使用or来连接条件
-反例：SELECT * FROM student WHERE id=1 OR salary=30000
+> 反例：SELECT * FROM student WHERE id=1 OR salary=30000
 正例：# 分开两条sql写
 SELECT * FROM student WHERE id=1
 SELECT * FROM student WHERE salary=30000
@@ -45,7 +45,7 @@ SELECT * FROM student WHERE salary=30000
 虽然mysql是有优化器的，处于效率与成本考虑，遇到or条件，索引还是可能失效的
 
 3. 使用varchar代替char
-反例：`deptname` char(100) DEFAULT NULL COMMENT '部门名称'
+> 反例：`deptname` char(100) DEFAULT NULL COMMENT '部门名称'
 正例：`deptname` varchar(100) DEFAULT NULL COMMENT '部门名称'
 理由：
 varchar变长字段按数据内容实际长度存储，存储空间小，可以节省存储空间
@@ -53,26 +53,26 @@ char按声明大小存储，不足补空格
 其次对于查询来说，在一个相对较小的字段内搜索，效率更高
 
 4. 尽量使用数值替代字符串类型
-主键（id）：primary key优先使用数值类型int，tinyint
+> 主键（id）：primary key优先使用数值类型int，tinyint
 性别（sex）：0-代表女，1-代表男；数据库没有布尔类型，mysql推荐使用tinyint
 支付方式（payment）：1-现金、2-微信、3-支付宝、4-信用卡、5-银行卡
 服务状态（state）：1-开启、2-暂停、3-停止
 商品状态（state）：1-上架、2-下架、3-删除
 
 5. 查询尽量避免返回大量数据
-如果查询返回数据量很大，就会造成查询时间过长，网络传输时间过长。
+> 如果查询返回数据量很大，就会造成查询时间过长，网络传输时间过长。
 同时，大量数据返回也可能没有实际意义。如返回上千条甚至更多，用户也看不过来.
 通常采用分页，一页习惯10/20/50/100条。
 
 6. 使用explain分析你SQL执行计划
-EXPLAIN
+> EXPLAIN
 SELECT * FROM student WHERE id=1
 SQL很灵活，一个需求可以很多实现，那哪个最优呢？
 SQL提供了explain关键字，它可以分析你的SQL执行计划，看它是否最佳。
 Explain主要看SQL是否使用了索引。
 
 7. 是否使用了索引及其扫描类型
-type：
+> type：
 	ALL 全表扫描，没有优化，最慢的方式
 	index 索引全扫描
 	range 索引范围扫描，常用语<，<=，>=，between等操作
@@ -84,10 +84,10 @@ key：
 	真正使用的索引方式
 
 8. 创建name字段的索引
-ALTER TABLE student ADD INDEX index_name (NAME)
+> ALTER TABLE student ADD INDEX index_name (NAME)
 
 9. 优化like语句
-模糊查询，程序员最喜欢的就是使用like，但是like很可能让你的索引失效
+> 模糊查询，程序员最喜欢的就是使用like，但是like很可能让你的索引失效
 反例：
 EXPLAIN
 SELECT id,NAME FROM student WHERE NAME LIKE '%1'
@@ -98,7 +98,7 @@ EXPLAIN
 SELECT id,NAME FROM student WHERE NAME LIKE '1%'
 
 10. 字符串怪现象
-反例：
+> 反例：
 #未使用索引
 EXPLAIN
 SELECT * FROM student WHERE NAME=123
@@ -112,7 +112,7 @@ SELECT * FROM student WHERE NAME='123'
 MySQL会做隐式的类型转换，把它们转换为数值类型再做比较
 
 11. 索引不宜太多，一般5个以内
-索引并不是越多越好，虽其提高了查询的效率，但却会降低插入和更新的效率
+> 索引并不是越多越好，虽其提高了查询的效率，但却会降低插入和更新的效率
 索引可以理解为一个就是一张表，其可以存储数据，其数据就要占空间
 再者，索引表的一个特点，其数据是排序的，那排序要不要花时间呢？肯定要
 insert或update时有可能会重建索引，如果数据量巨大，重建将进行记录的重新排序，
@@ -120,11 +120,11 @@ insert或update时有可能会重建索引，如果数据量巨大，重建将�
 一个表的索引数最好不要超过5个，若太多需要考虑一些索引是否有存在的必要
 
 12. 索引不适合建在有大量重复数据的字段上
-如性别字段。因为SQL优化器是根据表中数据量来进行查询优化的，如果索引列有大量重复数据，
+> 如性别字段。因为SQL优化器是根据表中数据量来进行查询优化的，如果索引列有大量重复数据，
 Mysql查询优化器推算发现不走索引的成本更低，很可能就放弃索引了。
 
 13. where限定查询的数据
-数据中假定就一个男的记录
+> 数据中假定就一个男的记录
 反例：
 SELECT id,NAME FROM student WHERE sex='男'
 正例：
@@ -133,7 +133,7 @@ SELECT id,NAME FROM student WHERE id=1 AND sex='男'
 需要什么数据，就去查什么数据，避免返回不必要的数据，节省开销
 
 14. 避免在where中对字段进行表达式操作
-反例：
+> 反例：
 EXPLAIN
 SELECT * FROM student WHERE id+1-1=+1
 正例：
@@ -145,7 +145,7 @@ SELECT * FROM student WHERE id=1
 SQL解析时，如果字段相关的是表达式就进行全表扫描
 
 15. 避免在where子句中使用!=或<>操作符
-应尽量避免在where子句中使用!=或<>操作符，否则引擎将放弃使用索引而进行全表扫描。
+> 应尽量避免在where子句中使用!=或<>操作符，否则引擎将放弃使用索引而进行全表扫描。
 记住实现业务优先，实在没办法，就只能使用，并不是不能使用。如果不能使用，SQL也就无需支持了。
 反例：
 EXPLAIN
@@ -156,7 +156,7 @@ SELECT * FROM student WHERE salary<>3000
 使用!=和<>很可能会让索引失效
 
 16. 去重distinct过滤字段要少
-#索引失效
+> #索引失效
 EXPLAIN
 SELECT DISTINCT * FROM student
 #索引生效
@@ -169,11 +169,11 @@ SELECT DISTINCT NAME FROM student
 数据库引擎就会对数据进行比较，过滤掉重复数据，然而这个比较、过滤的过程会占用系统资源，如cpu时间
 
 17. where中使用默认值代替null
-#修改表，增加age字段，类型int，非空，默认值0
+> #修改表，增加age字段，类型int，非空，默认值0
 ALTER TABLE student ADD age INT NOT NULL DEFAULT 0;
 
 18. 批量插入性能提升
-大量数据提交，上千，上万，批量性能非常快，mysql独有
+> 大量数据提交，上千，上万，批量性能非常快，mysql独有
 多条提交：
 INSERT INTO student (id,NAME) VALUES(4,'齐雷');
 INSERT INTO student (id,NAME) VALUES(5,'刘昱江');
@@ -184,7 +184,7 @@ INSERT INTO student (id,NAME) VALUES(4,'齐雷'),(5,'刘昱江');
 数据量小体现不出来
 
 19. 批量删除优化
-避免同时修改或删除过多数据，因为会造成cpu利用率过高，会造成锁表操作，从而影响别人对数据库的访问。
+> 避免同时修改或删除过多数据，因为会造成cpu利用率过高，会造成锁表操作，从而影响别人对数据库的访问。
 反例：
 #一次删除10万或者100万+？
 delete from student where id <100000;
@@ -202,7 +202,7 @@ delete student where id>=500 and id<1000;
 一次性删除太多数据，可能造成锁表，会有lock wait timeout exceed的错误，所以建议分批操作
 
 20. 伪删除设计
-商品状态（state）：1-上架、2-下架、3-删除
+> 商品状态（state）：1-上架、2-下架、3-删除
 理由：
 这里的删除只是一个标识，并没有从数据库表中真正删除，可以作为历史记录备查
 同时，一个大型系统中，表关系是非常复杂的，如电商系统中，商品作废了，但如果直接删除商品，其它商品详情，物流信息中可能都有其引用。
@@ -210,7 +210,7 @@ delete student where id>=500 and id<1000;
 操作速度快，特别数据量很大情况下
 
 21. 提高group by语句的效率
-可以在执行到该语句前，把不需要的记录过滤掉
+> 可以在执行到该语句前，把不需要的记录过滤掉
 反例：先分组，再过滤
 select job，avg（salary） from employee
 group by job
@@ -221,7 +221,7 @@ where job ='president' or job = 'managent'
 group by job;
 
 22. 复合索引最左特性
-创建复合索引，也就是多个字段
+> 创建复合索引，也就是多个字段
 ALTER TABLE student ADD INDEX idx_name_salary (NAME,salary)
 满足复合索引的左侧顺序，哪怕只是部分，复合索引生效
 EXPLAIN
@@ -241,7 +241,7 @@ SELECT * FROM student WHERE salary=3000 AND NAME='陈子枢'
 联合索引不满足最左原则，索引一般会失效，但是这个还跟Mysql优化器有关的
 
 23. 排序字段创建索引
-什么样的字段才需要创建索引呢？原则就是where和order by中常出现的字段就创建索引。
+> 什么样的字段才需要创建索引呢？原则就是where和order by中常出现的字段就创建索引。
 #使用*，包含了未索引的字段，导致索引失效
 EXPLAIN
 SELECT * FROM student ORDER BY NAME;
@@ -260,7 +260,7 @@ EXPLAIN
 SELECT id,NAME FROM student ORDER BY sex
 
 24. 删除冗余和重复的索引
-SHOW INDEX FROM student
+> SHOW INDEX FROM student
 #创建索引index_name
 ALTER TABLE student ADD INDEX index_name (NAME)
 #删除student表的index_name索引
@@ -271,14 +271,14 @@ ALTER TABLE student DROP INDEX index_name ;
 ALTER TABLE student DROP PRIMARY KEY ;
 
 25. 不要有超过5个以上的表连接
-关联的表个数越多，编译的时间和开销也就越大
+> 关联的表个数越多，编译的时间和开销也就越大
 每次关联内存中都生成一个临时表
 应该把连接表拆开成较小的几个执行，可读性更高
 如果一定需要连接很多表才能得到数据，那么意味着这是个糟糕的设计了
 阿里规范中，建议多表联查三张表以下
 
 26. inner join 、left join、right join，优先使用inner join
-三种连接如果结果相同，优先使用inner join，如果使用left join左边表尽量小
+> 三种连接如果结果相同，优先使用inner join，如果使用left join左边表尽量小
 inner join 内连接，只保留两张表中完全匹配的结果集
 left join会返回左表所有的行，即使在右表中没有匹配的记录
 right join会返回右表所有的行，即使在左表中没有匹配的记录
@@ -288,7 +288,7 @@ right join会返回右表所有的行，即使在左表中没有匹配的记录
 这是mysql优化原则，就是小表驱动大表，小的数据集驱动大的数据集，从而让性能更优
 
 27. in子查询的优化
-日常开发实现业务需求可以有两种方式实现：
+> 日常开发实现业务需求可以有两种方式实现：
 一种使用数据库SQL脚本实现
 一种使用程序实现
 如需求：查询所有部门的所有员工：
@@ -319,7 +319,7 @@ for(int i=0;i<B.length;i++) {
 就会额外花费很多实际，这样系统就受不了了，慢，卡顿
 
 28. 尽量使用union all替代union
-#UNION 操作符用于合并两个或多个 SELECT 语句的结果集。
+> #UNION 操作符用于合并两个或多个 SELECT 语句的结果集。
 反例：
 SELECT * FROM student
 UNION
