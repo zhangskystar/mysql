@@ -38,20 +38,28 @@
 select * 进行查询时，很可能不会用到索引，就会造成全表扫描
 
 2. 避免在where子句中使用or来连接条件
-> 反例：SELECT * FROM student WHERE id=1 OR salary=30000
+```
+反例：SELECT * FROM student WHERE id=1 OR salary=30000
+```
+```
 正例：# 分开两条sql写
 SELECT * FROM student WHERE id=1
 SELECT * FROM student WHERE salary=30000
-理由：
+```
+> 理由：
 使用or可能会使索引失效，从而全表扫描
 对于or没有索引的salary这种情况，假设它走了id的索引，但是走到salary查询条件时，它还得全表扫描。
 也就是说整个过程需要三步：全表扫描+索引扫描+合并。如果它一开始就走全表扫描，直接一遍扫描就搞定。
 虽然mysql是有优化器的，处于效率与成本考虑，遇到or条件，索引还是可能失效的
 
 3. 使用varchar代替char
-> 反例：`deptname` char(100) DEFAULT NULL COMMENT '部门名称'
-正例：`deptname` varchar(100) DEFAULT NULL COMMENT '部门名称'
-理由：
+```
+ 反例：`deptname` char(100) DEFAULT NULL COMMENT '部门名称'
+```
+```
+ 正例：`deptname` varchar(100) DEFAULT NULL COMMENT '部门名称'
+```
+> 理由：
 varchar变长字段按数据内容实际长度存储，存储空间小，可以节省存储空间
 char按声明大小存储，不足补空格
 其次对于查询来说，在一个相对较小的字段内搜索，效率更高
@@ -69,9 +77,11 @@ char按声明大小存储，不足补空格
 通常采用分页，一页习惯10/20/50/100条。
 
 6. 使用explain分析你SQL执行计划
-> EXPLAIN
+```
+EXPLAIN
 SELECT * FROM student WHERE id=1
-SQL很灵活，一个需求可以很多实现，那哪个最优呢？
+```
+> SQL很灵活，一个需求可以很多实现，那哪个最优呢？
 SQL提供了explain关键字，它可以分析你的SQL执行计划，看它是否最佳。
 Explain主要看SQL是否使用了索引。
 
@@ -88,29 +98,39 @@ key：
 	真正使用的索引方式
 
 8. 创建name字段的索引
-> ALTER TABLE student ADD INDEX index_name (NAME)
+```
+ALTER TABLE student ADD INDEX index_name (NAME)
+```
 
 9. 优化like语句
 > 模糊查询，程序员最喜欢的就是使用like，但是like很可能让你的索引失效
+```
 反例：
 EXPLAIN
 SELECT id,NAME FROM student WHERE NAME LIKE '%1'
 EXPLAIN
 SELECT id,NAME FROM student WHERE NAME LIKE '%1%'
+```
+```
 正例：
 EXPLAIN
 SELECT id,NAME FROM student WHERE NAME LIKE '1%'
+```
 
 10. 字符串怪现象
-> 反例：
+```
+反例：
 #未使用索引
 EXPLAIN
 SELECT * FROM student WHERE NAME=123
+```
+```
 正例：
 #使用索引
 EXPLAIN
 SELECT * FROM student WHERE NAME='123'
-理由：
+```
+> 理由：
 为什么第一条语句未加单引号就不走索引了呢？
 这是因为不加单引号时，是字符串跟数字的比较，它们类型不匹配，
 MySQL会做隐式的类型转换，把它们转换为数值类型再做比较
@@ -129,38 +149,49 @@ Mysql查询优化器推算发现不走索引的成本更低，很可能就放弃
 
 13. where限定查询的数据
 > 数据中假定就一个男的记录
+```
 反例：
 SELECT id,NAME FROM student WHERE sex='男'
+```
+```
 正例：
 SELECT id,NAME FROM student WHERE id=1 AND sex='男'
-理由：
+```
+> 理由：
 需要什么数据，就去查什么数据，避免返回不必要的数据，节省开销
 
 14. 避免在where中对字段进行表达式操作
-> 反例：
+```
+反例：
 EXPLAIN
 SELECT * FROM student WHERE id+1-1=+1
+```
+```
 正例：
 EXPLAIN
 SELECT * FROM student WHERE id=+1-1+1
 EXPLAIN
 SELECT * FROM student WHERE id=1
-理由：
+```
+> 理由：
 SQL解析时，如果字段相关的是表达式就进行全表扫描
 
 15. 避免在where子句中使用!=或<>操作符
 > 应尽量避免在where子句中使用!=或<>操作符，否则引擎将放弃使用索引而进行全表扫描。
 记住实现业务优先，实在没办法，就只能使用，并不是不能使用。如果不能使用，SQL也就无需支持了。
+```
 反例：
 EXPLAIN
 SELECT * FROM student WHERE salary!=3000
 EXPLAIN
 SELECT * FROM student WHERE salary<>3000
-理由：
+```
+> 理由：
 使用!=和<>很可能会让索引失效
 
 16. 去重distinct过滤字段要少
-> #索引失效
+```
+#索引失效
 EXPLAIN
 SELECT DISTINCT * FROM student
 #索引生效
@@ -168,27 +199,34 @@ EXPLAIN
 SELECT DISTINCT id,NAME FROM student
 EXPLAIN
 SELECT DISTINCT NAME FROM student
-理由：
+```
+> 理由：
 带distinct的语句占用cpu时间高于不带distinct的语句。因为当查询很多字段时，如果使用distinct，
 数据库引擎就会对数据进行比较，过滤掉重复数据，然而这个比较、过滤的过程会占用系统资源，如cpu时间
 
 17. where中使用默认值代替null
-> #修改表，增加age字段，类型int，非空，默认值0
+```
+#修改表，增加age字段，类型int，非空，默认值0
 ALTER TABLE student ADD age INT NOT NULL DEFAULT 0;
-
+```
 18. 批量插入性能提升
 > 大量数据提交，上千，上万，批量性能非常快，mysql独有
 多条提交：
+```
 INSERT INTO student (id,NAME) VALUES(4,'齐雷');
 INSERT INTO student (id,NAME) VALUES(5,'刘昱江');
-批量提交：
+```
+> 批量提交：
+```
 INSERT INTO student (id,NAME) VALUES(4,'齐雷'),(5,'刘昱江');
-理由：
+```
+> 理由：
 默认新增SQL有事务控制，导致每条都需要事务开启和事务提交；而批量处理是一次事务开启和提交。自然速度飞升
 数据量小体现不出来
 
 19. 批量删除优化
 > 避免同时修改或删除过多数据，因为会造成cpu利用率过高，会造成锁表操作，从而影响别人对数据库的访问。
+```
 反例：
 #一次删除10万或者100万+？
 delete from student where id <100000;
@@ -196,13 +234,16 @@ delete from student where id <100000;
 for（User user:list）{
 delete from student;
 }
+```
+```
 正例：
 //分批进行删除，如每次500
 for(){
 delete student where id<500;
 }
 delete student where id>=500 and id<1000;
-理由：
+```
+> 理由：
 一次性删除太多数据，可能造成锁表，会有lock wait timeout exceed的错误，所以建议分批操作
 
 20. 伪删除设计
@@ -215,37 +256,52 @@ delete student where id>=500 and id<1000;
 
 21. 提高group by语句的效率
 > 可以在执行到该语句前，把不需要的记录过滤掉
+```
 反例：先分组，再过滤
 select job，avg（salary） from employee
 group by job
 having job ='president' or job = 'managent';
+```
+```
 正例：先过滤，后分组
 select job，avg（salary） from employee
 where job ='president' or job = 'managent'
 group by job;
+```
 
 22. 复合索引最左特性
 > 创建复合索引，也就是多个字段
+```
 ALTER TABLE student ADD INDEX idx_name_salary (NAME,salary)
+```
 满足复合索引的左侧顺序，哪怕只是部分，复合索引生效
+```
 EXPLAIN
 SELECT * FROM student WHERE NAME='陈子枢'
+```
 没有出现左边的字段，则不满足最左特性，索引失效
+```
 EXPLAIN
 SELECT * FROM student WHERE salary=3000
+```
 复合索引全使用，按左侧顺序出现 name,salary，索引生效
+```
 EXPLAIN
 SELECT * FROM student WHERE NAME='陈子枢' AND salary=3000
+```
 虽然违背了最左特性，但MYSQL执行SQL时会进行优化，底层进行颠倒优化
+```
 EXPLAIN
 SELECT * FROM student WHERE salary=3000 AND NAME='陈子枢'
-理由：
+```
+> 理由：
 复合索引也称为联合索引
 当我们创建一个联合索引的时候，如(k1,k2,k3)，相当于创建了（k1）、(k1,k2)和(k1,k2,k3)三个索引，这就是最左匹配原则
 联合索引不满足最左原则，索引一般会失效，但是这个还跟Mysql优化器有关的
 
 23. 排序字段创建索引
 > 什么样的字段才需要创建索引呢？原则就是where和order by中常出现的字段就创建索引。
+```
 #使用*，包含了未索引的字段，导致索引失效
 EXPLAIN
 SELECT * FROM student ORDER BY NAME;
@@ -262,9 +318,11 @@ SELECT id,NAME FROM student ORDER BY salary,NAME
 #排序字段未创建索引，性能就慢
 EXPLAIN
 SELECT id,NAME FROM student ORDER BY sex
+```
 
 24. 删除冗余和重复的索引
-> SHOW INDEX FROM student
+```
+SHOW INDEX FROM student
 #创建索引index_name
 ALTER TABLE student ADD INDEX index_name (NAME)
 #删除student表的index_name索引
@@ -273,6 +331,7 @@ DROP INDEX index_name ON student ;
 ALTER TABLE student DROP INDEX index_name ;
 #主键会自动创建索引，删除主键索引
 ALTER TABLE student DROP PRIMARY KEY ;
+```
 
 25. 不要有超过5个以上的表连接
 > 关联的表个数越多，编译的时间和开销也就越大
@@ -283,10 +342,16 @@ ALTER TABLE student DROP PRIMARY KEY ;
 
 26. inner join 、left join、right join，优先使用inner join
 > 三种连接如果结果相同，优先使用inner join，如果使用left join左边表尽量小
+```
 inner join 内连接，只保留两张表中完全匹配的结果集
+```
+```
 left join会返回左表所有的行，即使在右表中没有匹配的记录
+```
+```
 right join会返回右表所有的行，即使在左表中没有匹配的记录
-理由：
+```
+> 理由：
 如果inner join是等值连接，返回的行数比较少，所以性能相对会好一点
 同理，使用了左连接，左边表数据结果尽量小，条件尽量放到左边处理，意味着返回的行数可能比较少。
 这是mysql优化原则，就是小表驱动大表，小的数据集驱动大的数据集，从而让性能更优
@@ -295,6 +360,7 @@ right join会返回右表所有的行，即使在左表中没有匹配的记录
 > 日常开发实现业务需求可以有两种方式实现：
 一种使用数据库SQL脚本实现
 一种使用程序实现
+```
 如需求：查询所有部门的所有员工：
 #in子查询
 SELECT * FROM tb_user WHERE dept_id IN (SELECT id FROM tb_dept);
@@ -303,8 +369,10 @@ SELECT * FROM tb_user WHERE dept_id IN (SELECT id FROM tb_dept);
 SELECT id FROM tb_dept
 #再由部门dept_id，查询tb_user的员工
 SELECT * FROM tb_user u,tb_dept d WHERE u.dept_id = d.id 
-假设表A表示某企业的员工表，表B表示部门表，查询所有部门的所有员工，很容易有以下程序实现，
+```
+> 假设表A表示某企业的员工表，表B表示部门表，查询所有部门的所有员工，很容易有以下程序实现，
 可以抽象成这样的一个嵌套循环：
+```
 List<> resultSet;
 #部门表中嵌套员工表
 for(int i=0;i<B.length;i++) {
@@ -317,22 +385,27 @@ for(int i=0;i<B.length;i++) {
 	}
 }
 上面的需求使用SQL就远不如程序实现，特别当数据量巨大时。
-理由：
+```
+> 理由：
 数据库最费劲的就是程序链接的释放。假设链接了两次，每次做上百万次的数据集查询，查完就结束，
 这样就只做了两次；相反建立了上百万次链接，申请链接释放反复重复，
 就会额外花费很多实际，这样系统就受不了了，慢，卡顿
 
 28. 尽量使用union all替代union
 > #UNION 操作符用于合并两个或多个 SELECT 语句的结果集。
+```
 反例：
 SELECT * FROM student
 UNION
 SELECT * FROM student
+```
+```
 正例：
 SELECT * FROM student
 UNION ALL
 SELECT * FROM student
-理由：
+```
+> 理由：
 union和union all的区别是，union会自动去掉多个结果集合中的重复结果，而union all则将所有的结果全部显示出来，不管是不是重复
 union：对两个结果集进行并集操作，不包括重复行，同时进行默认规则的排序
 union在进行表链接后会筛选掉重复的记录，所以在表链接后会对所产生的结果集进行排序运算，删除重复的记录再返回结果。
