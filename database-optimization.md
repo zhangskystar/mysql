@@ -27,11 +27,11 @@
 #### 具体优化案例：
 1. 查询SQL尽量不要使用select *，而是具体字段
 > 反例：SELECT * FROM student
-正例：SELECT id,NAME FROM student
-理由：
-字段多时，大表能达到100多个字段甚至达200多个字段
-只取需要的字段，节省资源、减少网络开销
-select * 进行查询时，很可能不会用到索引，就会造成全表扫描
+> 正例：SELECT id,NAME FROM student
+> 理由：
+> 字段多时，大表能达到100多个字段甚至达200多个字段
+> 只取需要的字段，节省资源、减少网络开销
+> select * 进行查询时，很可能不会用到索引，就会造成全表扫描
 
 2. 避免在where子句中使用or来连接条件
 > 反例：SELECT * FROM student WHERE id=1 OR salary=30000
